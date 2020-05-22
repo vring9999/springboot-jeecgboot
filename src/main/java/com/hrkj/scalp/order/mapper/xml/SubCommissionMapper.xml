@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrkj.scalp.order.mapper.SubCommissionMapper">
+
+    <select id="getSumAccount" resultType="java.util.HashMap" parameterType="java.util.Map">
+        SELECT
+            <if test="tow != null">
+                two_user_id userId,sum(one_user_money) allMoney,
+            </if>
+            <if test="three != null">
+                three_user_id userId,sum(two_user_money) allMoney,
+            </if>
+            <if test="four != null">
+                four_user_id userId,sum(three_user_money) allMoney,
+            </if>
+            <if test="five != null">
+                five_user_id userId,sum(four_user_money) allMoney,
+            </if>
+            (select count(1) from farming_user where parent_id = two_user_id ) sumCount
+        FROM
+            farming_sub_commission
+        WHERE 1=1
+
+            <if test="tow != null">
+                and two_user_id in ( ${tow} )
+            </if>
+            <if test="three != null">
+                and three_user_id in ( ${three} )
+            </if>
+            <if test="four != null">
+                and four_user_id in ( ${four} )
+            </if>
+            <if test="five != null">
+                and five_user_id in ( ${five} )
+            </if>
+        GROUP BY
+            <if test="tow != null">
+                two_user_id
+            </if>
+            <if test="three != null">
+                three_user_id
+            </if>
+            <if test="four != null">
+                four_user_id
+            </if>
+            <if test="five != null">
+                five_user_id
+            </if>
+    </select>
+
+
+
+    <select id="queryComeBackList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            u.id,
+            u.icon icon,
+            u.name,
+            (CASE
+                WHEN u.proxy_level = 1 THEN
+                    c.one_user_money
+                WHEN u.proxy_level = 2 THEN
+                    c.two_user_money
+                WHEN u.proxy_level = 3 THEN
+                    c.three_user_money
+                WHEN u.proxy_level = 4 THEN
+                    c.four_user_money
+                END
+            )AS subMoney,
+            DATE_FORMAT(c.create_time,'%Y-%m-%d %H:%i:%s') createTime
+            FROM
+                farming_sub_commission c,
+                farming_user u
+            WHERE u.id = c.user_id and
+                <if test="oneUserId != null">
+                     c.one_user_id = #{oneUserId}
+                </if>
+                <if test="twoUserId != null">
+                    c.two_user_id = #{twoUserId}
+                </if>
+                <if test="threeUserId != null">
+                    c.three_user_id = #{threeUserId}
+                </if>
+                <if test="fourUserId != null">
+                    c.four_user_id = #{fourUserId}
+                </if>
+    </select>
+</mapper>

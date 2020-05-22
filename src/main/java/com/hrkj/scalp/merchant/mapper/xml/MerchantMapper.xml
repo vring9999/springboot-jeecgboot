@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrkj.scalp.merchant.mapper.MerchantMapper">
+
+    <sql id="login_sql">
+        id id,
+        name name,
+        phone phone,
+        password password,
+        balance balance,
+        frozen frozen,
+        with_frozen withFrozen,
+        register_time  registerTime,
+        register_ip registerIp,
+        last_time lastTime,
+        last_ip lastIp,
+        qq qq,
+        wechat wechat,
+        match_state matchState,
+        group_name groupName,
+        permanent_lock permanentLock,
+        temp_lock tempLock
+    </sql>
+
+    <sql id="select_sql">
+        id id,
+        name name,
+        phone phone,
+        balance balance,
+        frozen lockStatus,
+        register_time  registerTime,
+        register_ip registerIp,
+        last_time lastTime,
+        last_ip lastIp,
+        qq qq,
+        wechat wechat,
+        match_state matchState,
+        group_name groupName,
+        permanent_lock permanentLock,
+        temp_lock tempLock
+    </sql>
+
+    <sql id="operator_sql">
+        id ,
+        name ,
+        phone ,
+        password ,
+        balance ,
+        frozen ,
+        register_time  ,
+        register_ip ,
+        last_time ,
+        last_ip ,
+        qq ,
+        wechat ,
+        match_state ,
+        group_name ,
+        permanent_lock ,
+        temp_lock ,
+        remark1,
+        remark2,
+        remark3,
+        remark4
+    </sql>
+
+    <select id="queryBasicInfo" resultType="MerchantUserVo">
+        select  id , email ,
+                register_time  registerTime,
+                last_time lastTime,
+                last_os lastOs,
+                last_city lastCity,
+                phone , qq ,wechat ,
+                permanent_lock status ,
+                secret_key secretKey
+        from farming_merchant
+        where id = #{id}
+    </select>
+
+    <select id="queryMerchantByPhone" resultType="Merchant" parameterType="java.lang.String">
+        select
+        <include refid="login_sql"></include>
+        from farming_merchant
+        where phone = #{phone}
+    </select>
+
+    <update id="editLockStatus" parameterType="java.util.Map">
+        update farming_merchant
+        <trim prefix="set" suffixOverrides=",">
+            <if test="permanentLock != null">
+                permanent_lock=#{permanentLock} ,
+            </if>
+            <if test="tempLock != null">
+                temp_lock=#{tempLock} ,
+            </if>
+            <if test="password != null">
+                password=#{password} ,
+            </if>
+            <if test="balance != null">
+                balance=#{balance} ,
+            </if>
+            <if test="groupName != null">
+                group_name=#{groupName},
+            </if>
+            <if test="remark1 != null">
+                remark1=#{remark1},
+            </if>
+        </trim>
+        <trim prefix="where" suffixOverrides="and">
+            <if test="id!=null">
+                 id = #{id} and
+            </if>
+            <if test="phone!=null">
+                 phone = #{phone}
+            </if>
+        </trim>
+    </update>
+
+
+
+</mapper>

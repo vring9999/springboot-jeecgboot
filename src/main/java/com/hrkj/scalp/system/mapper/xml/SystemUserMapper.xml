@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrkj.scalp.system.mapper.SystemUserMapper">
+    <sql id="login_sql">
+        id id,
+        account account,
+        safe_code safeCode,
+        password password,
+        is_super_admin isSuperAdmin,
+        lock_status lockStatus,
+        update_time  updateTime,
+        create_time createTime,
+        remark
+    </sql>
+
+    <sql id="select_sql">
+        id id,
+        account account,
+        is_super_admin isSuperAdmin,
+        lock_status lockStatus,
+        update_time  updateTime,
+        create_time createTime,
+        remark
+    </sql>
+
+    <sql id="operator_sql">
+        account ,
+        safe_code ,
+        password ,
+        is_super_admin ,
+        lock_status ,
+        update_time  ,
+        create_time ,
+        remark
+    </sql>
+
+    <select id="querySystemUserByAccount" resultType="SystemUser" parameterType="java.lang.String">
+        select
+            <include refid="login_sql"></include>
+        from farming_system_user
+        where account = #{account}
+    </select>
+
+
+    <!-- 根据角色Id查询 -->
+    <select id="getUserByRoleId" resultType="SystemUser">
+        select * from farming_system_user where id in (select user_id from farming_user_role where role_id=#{roleId})
+        <if test="account!=null and account!=''">
+            and account = #{account}
+        </if>
+    </select>
+
+</mapper>

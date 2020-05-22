@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrkj.scalp.accountLog.mapper.ScalpAccountLogMapper">
+
+    <select id="queryChangeMoneyForOrder" resultType="java.lang.Integer">
+        select sum(change_money)
+        from scalp_account_log
+        where user_id = #{userId}
+        and record_type = #{recordType}
+        and TO_DAYS(create_time) = TO_DAYS(NOW())
+    </select>
+
+</mapper>

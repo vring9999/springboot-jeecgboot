@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrkj.scalp.config.mapper.GroupMapper">
+
+
+    <select id="KK" resultType="java.util.Map" parameterType="java.util.Map">
+        select
+        CASE
+        WHEN  type = #{type}
+        THEN group_name
+        WHEN  sort = #{sort}
+        THEN default_per
+        ELSE wechat
+        END AS result
+        from farming_group
+        where id = 10
+        <if test="type != null ">
+            and type = #{type}
+        </if>
+        <if test="sort != null  ">
+            and sort = #{sort}
+        </if>
+    </select>
+
+
+    <select id="KKs" resultType="java.util.Map" parameterType="java.util.Map">
+        select
+        <if test="type != null ">
+             type
+        </if>
+        <if test="sort != null  ">
+             sort
+        </if>
+        from farming_group
+        where id = 10
+        <if test="type != null ">
+            and type = #{type}
+        </if>
+        <if test="sort != null  ">
+            and sort = #{sort}
+        </if>
+    </select>
+
+</mapper>

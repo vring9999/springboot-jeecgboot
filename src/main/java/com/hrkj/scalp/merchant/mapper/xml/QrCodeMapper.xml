@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrkj.scalp.merchant.mapper.QrCodeMapper">
+
+
+    <update id="editStatus" parameterType="java.util.Map">
+        update farming_qr_code
+        <trim prefix="set" suffixOverrides=",">
+            <if test="useStatus != null">
+                use_status=#{useStatus} ,
+            </if>
+            <if test="pollStatus != null">
+                poll_status=#{pollStatus} ,
+            </if>
+            <if test="adminStatus != null">
+                admin_status=#{adminStatus} ,
+            </if>
+            <if test="sort != null">
+                sort=#{sort} ,
+            </if>
+        </trim>
+        <trim prefix="where" suffixOverrides="and">
+            <if test="id != null">
+                id=#{id} and
+            </if>
+            <if test="userId != null">
+                user_id=#{userId} and
+            </if>
+        </trim>
+
+    </update>
+
+    <update id="updateBatch" parameterType="java.lang.String">
+        update farming_qr_code
+        set use_status = #{status}
+        where id in
+        <foreach collection="list" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </update>
+
+
+    <select id="listForApp" resultType="java.util.Map">
+        select id,qr_url qrUrl,max_account maxAccount
+        from farming_qr_code
+        where user_id = #{userId} and type=#{type}
+    </select>
+
+    <select id="queryCountOpen" resultType="java.lang.Integer">
+        select count(*)
+        from farming_qr_code
+        where user_id = #{userId}
+        and use_status = #{useStatus}
+    </select>
+
+    <select id="getPaymentCode" parameterType="java.util.Map" resultType="java.util.Map">
+        select
+            q.user_id userId,
+            q.qr_url qrUrl,
+            q.id qrId,
+            q.type qrType,
+            s.num num
+        from
+            farming_user u , farming_user_stock s ,farming_qr_code q , farming_manghe m
+        where u.merchant_id = #{merchantId}
+          and u.id = s.user_id
+          and s.m_id = #{shopId}
+          and s.num > 0
+          and q.surplus_account <![CDATA[>= ]]> #{money}
+          and q.use_status = 1
+          and s.m_id = m.id
+          and m.status = 1
+          and q.user_id <![CDATA[!= ]]> 'admin'
+    </select>
+
+    <update id="quartzUpdate">
+        update farming_qr_code
+        set  admin_status = 0,
+        use_status =1,
+        admin_remark = null
+        where use_status = 0 and admin_status = 1
+    </update>
+
+    <update id="quartzUpdateTodayAccount">
+        update farming_qr_code
+        set  today_account = 0,
+             surplus_account = max_account
+
+    </update>
+
+
+</mapper>

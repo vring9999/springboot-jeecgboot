@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrkj.scalp.user.mapper.UserMapper">
+
+    <resultMap id="userVo" type="UserVo">
+        <result column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="icon" property="icon"/>
+        <result column="voucher_money" property="voucherMoney"/>
+        <result column="group_name" property="groupName"/>
+        <result column="son_num" property="sonNum"/>
+        <result column="day_money" property="dayMoney"/>
+        <result column="all_money" property="allMoney"/>
+    </resultMap>
+
+
+	<sql id="login_sql">
+		id id,
+        merchant_id merchantId,
+        parent_id parentId,
+        name name,
+        real_name realName,
+        email email,
+        phone phone,
+        icon icon,
+        password password,
+        voucher_money voucherMoney,
+        voucher_frozen voucherFrozen,
+        register_time  registerTime,
+        last_time lastTime,
+        last_ip lastIp,
+        proxy_level proxyLevel,
+        qq qq,
+        wechat wechat,
+        group_name groupName,
+        chrome_key chromeKey
+    </sql>
+
+	<sql id="select_sql">
+        id id,
+        merchant_id merchantId,
+        parent_id,
+        name name,
+        real_name realName,
+        email email,
+        phone phone,
+        icon icon,
+        voucher_money voucherMoney,
+        register_time  registerTime,
+        register_ip registerIp,
+        last_time lastTime,
+        last_ip lastIp,
+        proxy_level proxyLevel,
+        id_card idCard,
+        qq qq,
+        wechat wechat,
+        receipt_status receiptStatus,
+        group_name groupName,
+        parent_code parentCode,
+        register_code registerCode,
+        chrome_key chromeKey
+    </sql>
+
+
+
+	<sql id="operator_sql">
+        id ,
+        merchant_id ,
+        parent_id,
+        name ,
+        real_name ,
+        email ,
+        phone ,
+        password,
+        icon icon,
+        register_time  ,
+        register_ip ,
+        last_time ,
+        last_ip ,
+        proxy_level,
+        qq ,
+        wechat ,
+        receipt_status ,
+        group_name ,
+        parent_code ,
+        register_code ,
+        chrome_key ,
+        remark1,
+        remark2,
+        remark3
+    </sql>
+
+    <select id="queryUserSonList" resultType="UserSon" parameterType="java.util.Map">
+        select  id , wechat ,phone,
+                register_time  registerTime,
+                last_time lastTime,
+                proxy_level proxyLevel,
+                receipt_status receiptStatus,
+                user_status status
+        from farming_user
+        where 1 = 1
+        <if test="phoneId != null and phoneId != ''">
+            and parent_id = #{phoneId} or phone = #{phoneId}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            and register_time <![CDATA[>= ]]> #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+            and register_time <![CDATA[<= ]]> #{endTime}
+        </if>
+        <if test="receiptStatus != null and receiptStatus != ''">
+            and receipt_status = #{receiptStatus}
+        </if>
+        <if test="status != null and status != ''">
+            and user_status = #{status}
+        </if>
+
+    </select>
+    
+    <select id="queryBasicInfo" resultType="MerchantUserVo">
+        select  id , email ,
+                register_time  registerTime,
+                last_time lastTime,
+                last_os lastOs,
+                last_city lastCity,
+                phone , qq ,wechat ,
+                user_status status ,
+                register_code secretKey
+        from farming_user
+        where id = #{id}
+    </select>
+
+	<delete id="deleteByMainId" parameterType="java.lang.String">
+		DELETE 
+		FROM  farming_user 
+		WHERE
+			 merchant_id = #{mainId}
+	</delete>
+	
+	<select id="selectByMainId" parameterType="java.lang.String" resultType="User">
+		SELECT <include refid="select_sql"></include>
+		FROM  farming_user
+		WHERE
+			 merchant_id = #{mainId}
+	</select>
+
+	<select id="queryUserByAccount" resultType="User" parameterType="java.lang.String">
+		select
+		<include refid="login_sql"></include>
+		from farming_user
+		where phone = #{phone}
+	</select>
+
+
+    <update id="editLockStatus" parameterType="java.util.Map">
+        update farming_user
+        <trim prefix="set" suffixOverrides=",">
+            <if test="password != null">
+                password=#{password} ,
+            </if>
+            <if test="balance != null">
+                balance=#{balance} ,
+            </if>
+            <if test="groupName != null">
+                group_name=#{groupName} ,
+            </if>
+            <if test="icon != null">
+                icon=#{icon} ,
+            </if>
+            <if test="receiveStatus != null">
+                receive_status=#{receiveStatus} ,
+            </if>
+            <if test="practiceStatus != null">
+                practice_status=#{practiceStatus} ,
+            </if>
+            <if test="name != null">
+                name=#{name} ,
+            </if>
+            <if test="phone != null">
+                phone=#{phone} ,
+            </if>
+        </trim>
+        <trim prefix="WHERE" prefixOverrides="and">
+            <if test="id!=null">
+                and id = #{id}
+            </if>
+            <if test="phone!=null">
+                and phone = #{phone}
+            </if>
+        </trim>
+    </update>
+
+	<select id="getUserByIphone" parameterType="java.lang.String" resultType="User">
+		SELECT *
+		FROM  farming_user
+		WHERE
+			 phone = #{phone}
+	</select>
+
+    <select id="queryParentUser" parameterType="java.lang.String" resultMap="userVo">
+        select name,id,group_name ,icon
+        from farming_user
+        where id = (select parent_id from farming_user where id = #{userId})
+    </select>
+
+    <sql id="level_money_CASE">
+            case
+                when u.proxy_level = 2
+                then sum(one_user_money)
+                when u.proxy_level = 3
+                then sum(two_user_money)
+                when u.proxy_level = 4
+                then sum(three_user_money)
+                when u.proxy_level = 5
+                then sum(four_user_money)
+                END AS MONEY
+    </sql>
+
+    <select id="querySonList"  resultMap="userVo">
+        select
+            id,
+            name,
+            icon,
+            voucher_money,
+            group_name,
+            proxy_level,
+            (select count(1) from farming_user where parent_id=u.id) son_num,
+            (select <include refid="level_money_CASE"></include> from farming_sub_commission c where  user_id=u.id) all_money,
+            (select <include refid="level_money_CASE"></include> from farming_sub_commission c where TO_DAYS(update_time) = TO_DAYS(NOW()) AND user_id=u.id) day_money
+        from
+            farming_user u
+        where
+            parent_id=#{userId}
+    </select>
+
+    <select id="queryUserInfo" resultMap="userVo">
+        SELECT
+            u.id,
+            u.name,
+            u.voucher_money,
+            u.group_name,
+            day_account as day_money,
+            (select count(1) from farming_user where parent_id=#{userId}) son_num,
+            (CASE
+                WHEN u.proxy_level = 1 THEN
+                        sum( c.one_user_money + c.proxy_money )
+                        WHEN u.proxy_level = 2 THEN
+                        sum( c.two_user_money + c.proxy_money )
+                        WHEN u.proxy_level = 3 THEN
+                        sum( c.three_user_money + c.proxy_money )
+                        WHEN u.proxy_level = 4 THEN
+                        sum( c.four_user_money + c.proxy_money )
+                    END )AS all_money
+            FROM
+                farming_sub_commission c,
+                farming_user u
+            WHERE
+                u.id = #{userId}
+    </select>
+
+
+</mapper>

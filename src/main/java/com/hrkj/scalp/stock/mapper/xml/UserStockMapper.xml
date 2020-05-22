@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrkj.scalp.stock.mapper.UserStockMapper">
+
+
+    <select id="queryUserStock" resultType="java.util.Map">
+        select m.id shopId,m.name shopName,s.num shopNum,s.day_count todayNum
+        from farming_manghe m,farming_user_stock s
+        where s.user_id = #{userId} and m.id = s.m_id
+    </select>
+
+    <update id="quartzUpdateStock">
+        update farming_user_stock
+        set day_count = 0
+    </update>
+
+</mapper>

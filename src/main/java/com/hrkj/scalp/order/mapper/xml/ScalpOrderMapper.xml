@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrkj.scalp.order.mapper.ScalpOrderMapper">
+    
+    
+    <select id="queryEarnMoneyForApp" resultType="java.util.Map">
+        SELECT
+            qr_type qrType,
+            sum( earn_money ) todayMoney,
+            (
+                SELECT sum( earn_money )  FROM scalp_order
+                WHERE user_id = #{userId}  AND qr_type = o.qr_type
+                AND remit_time <![CDATA[<= ]]> ( SELECT unix_timestamp( now( ) ) * 1000 )
+            ) locationMoney
+        FROM scalp_order o
+        WHERE user_id = #{userId}
+        AND remit_time <![CDATA[>= ]]> ( SELECT UNIX_TIMESTAMP( CAST( SYSDATE( ) AS DATE ) ) * 1000 )
+        AND user_pass_type <![CDATA[!= ]]> 2
+        GROUP BY qr_type
+    </select>
+
+    <select id="queryUserEarnForApp" resultType="java.lang.Integer">
+        SELECT
+            sum( user_earn ) todayMoney
+        FROM scalp_order o
+        WHERE user_id = #{userId}
+        AND user_pass_type <![CDATA[!= ]]> 2
+        AND remit_time <![CDATA[>= ]]> ( SELECT UNIX_TIMESTAMP( CAST( SYSDATE( ) AS DATE ) ) * 1000 )
+    </select>
+
+    <select id="queryOrderList" resultType="java.util.Map" parameterType="java.util.Map">
+        SELECT  o.order_id orderId,
+                o.shop_id shopId,
+                o.earn_money orderMoney,
+                o.user_earn userMoney,
+                FROM_UNIXTIME(o.order_time/1000,'%Y-%m-%d %H:%i:%s') orderTime,
+                FROM_UNIXTIME(o.remit_time/1000,'%Y-%m-%d %H:%i:%s') remitTime,
+                o.shop_num shopNum,
+                m.name shopName,
+                m.icon icon,
+                user_pass_type conifrmStatus,
+                pay_status payStatus
+        from scalp_order o ,farming_manghe m
+        where o.user_id = #{userId}
+        and o.shop_id = m.id
+        <if test="user_pass != null">
+            AND user_pass_type <![CDATA[!= ]]> 2
+        </if>
+        <if test="userPassType != null">
+            and o.user_pass_type = #{userPassType}
+            and pay_type <![CDATA[!= ]]> 0
+        </if>
+        <if test="payStatus != null">
+            and o.pay_status = #{payStatus}
+        </if>
+    </select>
+
+
+    <select id="queryOrderInfo" resultType="java.util.Map">
+        select sum(earn_money) money,count(*) num,sum(user_earn) userprofit,sum(merchant_earn) merchantprofit
+        from scalp_order
+        where order_status = 1
+        <if test="userId != null and userId != ''">
+            and user_id = #{userId}
+        </if>
+        <if test="merchantId != null and merchantId != '' ">
+            and merchant_id = #{merchantId}
+        </if>
+        <if test="flag == 1">
+            and remit_time <![CDATA[>= ]]> ( SELECT UNIX_TIMESTAMP( CAST( SYSDATE( ) AS DATE ) ) * 1000 )
+        </if>
+        <if test="flag == 2">
+            and  remit_time <![CDATA[>= ]]>(SELECT (UNIX_TIMESTAMP(CAST(SYSDATE()AS DATE) - INTERVAL 1 DAY)) * 1000)
+            and  remit_time <![CDATA[< ]]> (SELECT UNIX_TIMESTAMP( CAST( SYSDATE( ) AS DATE ) ) * 1000 )
+        </if>
+
+
+    </select>
+
+
+    <select id="allRanking" resultType="java.util.HashMap">
+        select
+        @rownum := @rownum + 1 AS num ,
+        user_id userId,
+        (select name from farming_user where id=user_id) userName,
+        count(1) ranCount
+        from scalp_order,(SELECT @rownum := 0) r
+        where
+        order_status=1
+        and  remit_time >= (SELECT (UNIX_TIMESTAMP(CAST(SYSDATE()AS DATE) - INTERVAL 1 DAY)) * 1000)
+        and  remit_time <![CDATA[< ]]> (SELECT UNIX_TIMESTAMP( CAST( SYSDATE( ) AS DATE ) ) * 1000 )
+        GROUP BY user_id
+        ORDER BY ranCount desc
+        LIMIT 100
+    </select>
+
+    <select id="smallRanking" resultType="java.util.HashMap" parameterType="java.lang.String">
+        select
+        @rownum := @rownum + 1 AS num ,
+        user_id userId,
+        (select name from farming_user where id=user_id) userName,
+        count(1) ranCount
+        from scalp_order,(SELECT @rownum := 0) r
+        where
+        order_status=1
+        and earn_money <![CDATA[< ]]> ${money}
+        and remit_time >= (SELECT (UNIX_TIMESTAMP(CAST(SYSDATE()AS DATE) - INTERVAL 1 DAY)) * 1000)
+        and remit_time <![CDATA[< ]]> (SELECT UNIX_TIMESTAMP( CAST( SYSDATE( ) AS DATE ) ) * 1000 )
+        GROUP BY user_id
+        ORDER BY ranCount desc
+        LIMIT 100
+    </select>
+
+    <select id="inviteRanking" resultType="java.util.HashMap">
+        select
+        @rownum := @rownum + 1 AS num ,
+        parent_id userId,
+        (select `name` from farming_user where id=u.parent_id) userName,
+        count(1)	inviteCount
+        from farming_user u,(SELECT @rownum := 0) r
+        where
+        user_status=1
+        and parent_id is not null
+        and register_time >= (SELECT (UNIX_TIMESTAMP(CAST(SYSDATE()AS DATE) - INTERVAL 1 DAY)) * 1000)
+        and register_time <![CDATA[< ]]>(SELECT UNIX_TIMESTAMP( CAST( SYSDATE( ) AS DATE ) ) * 1000 )
+        GROUP BY parent_id
+        ORDER BY inviteCount desc
+        LIMIT 100
+    </select>
+
+    <select id="allUnit" resultType="java.util.HashMap" parameterType="java.lang.String">
+        select
+        user_id userId,
+        (select name from farming_user where id=user_id) userName,
+        count(1) ranCount
+        from scalp_order
+        where
+        order_status=1
+        and remit_time >= (SELECT (UNIX_TIMESTAMP(CAST(SYSDATE()AS DATE) - INTERVAL 1 DAY)) * 1000)
+        and remit_time <![CDATA[< ]]>(SELECT UNIX_TIMESTAMP( CAST( SYSDATE( ) AS DATE ) ) * 1000 )
+        and user_id = #{userId}
+    </select>
+
+    <select id="smallUnit" resultType="java.util.HashMap" parameterType="java.lang.String">
+        select
+        user_id userId,
+        (select name from farming_user where id=user_id) userName,
+        count(1) ranCount
+        from scalp_order
+        where
+        order_status=1
+        and earn_money <![CDATA[< ]]> ${money}
+        and remit_time >= (SELECT (UNIX_TIMESTAMP(CAST(SYSDATE()AS DATE) - INTERVAL 1 DAY)) * 1000)
+        and remit_time <![CDATA[< ]]> (SELECT UNIX_TIMESTAMP( CAST( SYSDATE( ) AS DATE ) ) * 1000 )
+        and user_id = #{userId}
+    </select>
+
+    <select id="inviteUnit" resultType="java.util.HashMap" parameterType="java.lang.String">
+        select
+        parent_id userId,
+        (select `name` from farming_user where id=u.parent_id) userName,
+        count(1)	inviteCount
+        from farming_user u
+        where
+        user_status=1
+        and register_time >= (SELECT (UNIX_TIMESTAMP(CAST(SYSDATE()AS DATE) - INTERVAL 1 DAY)) * 1000)
+        and register_time <![CDATA[< ]]> (SELECT UNIX_TIMESTAMP( CAST( SYSDATE( ) AS DATE ) ) * 1000 )
+        and parent_id = #{userId}
+    </select>
+</mapper>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrkj.scalp.account.mapper.ScalpAccountMapper">
+    
+    
+    <select id="queryActualMoney" resultType="java.util.Map">
+        SELECT
+            sum( actual_money ) todayPayMoney,
+            (
+                SELECT sum( earn_money )  FROM scalp_order
+                WHERE user_id = #{userId}  AND type = 1
+                AND update_time <![CDATA[<= ]]> ( SELECT unix_timestamp( now( ) ) * 1000 )
+            ) locationPayMoney
+        FROM scalp_account o
+        WHERE user_id = #{userId} and type = 1
+        AND status = 3
+        AND update_time <![CDATA[>= ]]> ( SELECT UNIX_TIMESTAMP( CAST( SYSDATE( ) AS DATE ) ) * 1000 )
+
+    </select>
+
+    <select id="queryWithdraw" resultType="java.util.Map">
+        select
+            (select sum(operation_money) from scalp_account
+            where TO_DAYS(update_time) = TO_DAYS(NOW()) and user_id = a.user_id and type = a.type AND status = 3
+            ) todayCash,
+            (select sum(operation_money) from scalp_account
+            where DATEDIFF(update_time,NOW())=-1 and user_id = a.user_id and type = a.type AND status = 3 ) yesterdayCash,
+            sum(operation_money) locationCash
+        from scalp_account a
+        where user_id = #{userId} and type = #{type} AND status = 3
+    </select>
+
+
+
+
+</mapper>

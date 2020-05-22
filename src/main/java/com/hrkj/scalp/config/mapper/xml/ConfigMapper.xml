@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrkj.scalp.config.mapper.ConfigMapper">
+
+    <sql id="operator_sql">
+        id,
+        CFG_NAME ,
+        CFG_KEY ,
+        CFG_VALUE ,
+        CFG_REMARK ,
+        CFG_TYPE
+    </sql>
+
+    <sql id="query_sql">
+        id,
+        CFG_NAME cfgName,
+        CFG_KEY cfgKey,
+        CFG_VALUE cfgValue,
+        CFG_REMARK cfgRemark,
+        CFG_TYPE cfgType
+    </sql>
+    
+    <select id="queryByName" resultType="java.lang.Integer" parameterType="java.lang.String">
+        select  count(*)
+        from instead_common_config
+        where CFG_NAME like concat('%',#{cfgName},'%')
+    </select>
+
+</mapper>
